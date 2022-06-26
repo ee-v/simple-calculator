@@ -4,148 +4,144 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      operation: '',
+      formula: '',
       input: '0',
       result: null
     };
     this.handleInput = this.handleInput.bind(this);
-    this.reset = this.reset.bind(this);
-    this.resolve = this.resolve.bind(this);
+    this.clear = this.clear.bind(this);
   };
-  handleInput(input) {
-    const operation = /[+/*]/;
+
+  extract = (formula) => {
+    return formula.slice(0, -1);
+  };
+
+  lastChar = (formula) => {
+    return formula[formula.length - 1];
+  };
+
+  handleInput = (e) => {
+    const inputValue = e.target.value;
+    const operator = /[+\-*/]/;
     const number = /[0-9]/;
-    const decimal = /[.]/;
-    const subtract = /[-]/;
-    if (number.test(input)) {
-      this.setState(prevState => {
-        if (!!this.state.result) return {
-          operation: '',
-          input,
-          result: null
-        };
-        if (!decimal.test(prevState.input)) {
-          if (prevState.input == 0 && input == 0) return { input: 0 };
-          if (prevState.input == 0 && input != 0) return { input };
-        }
-        if (operation.test(prevState.input) || subtract.test(prevState.input)) return { input };
-        return {
-          input: prevState.input.concat(input)
-        };
-      });
-    }
-    if (decimal.test(input)) {
-      this.setState(prevState => {
-        if (!!prevState.result) return {
-          operation: '',
-          input: '0.',
-          result: null
-        };
-        if (decimal.test(prevState.input)) return { input: prevState.input };
-        if (operation.test(prevState.input)) return { input: '0.' };
-        return {
-          input: prevState.input.concat('.')
-        }
-      });
-    }
-    if (operation.test(input)) {
-      this.setState(prevState => {
-        if (this.state.operation == '') {
-          return {
-            operation: prevState.input.concat(input),
-            input
-          }
-        } else {
-          if (!operation.test(prevState.input)) {
-            if (!!this.state.result) return {
-              operation: prevState.input.concat(input),
-              input,
-              result: null
-            }
-            return {
-              operation: prevState.operation.concat(prevState.input, input),
-              input
-            }
-          } else {
-            return {
-              operation: prevState.operation.slice(0, -1).concat(input),
-              input
-            }
-          }
-        }
-      });
-    }
-    if (subtract.test(input)) {
-      this.setState(prevState => {
-        if (!operation.test(prevState.input)) return {
-          operation: prevState.operation.concat(prevState.input, '-'),
-          input
-        }
-        return {
-          operation: prevState.operation.concat('-'),
-          input
-        };
-      });
-    }
-  }
-  reset = () => {
-    this.setState({ operation: '', input: '0', result: null });
-  }
-  resolve = () => {
-    const operation = /[+/*]/;
-    if (!!this.state.result) return null;
+    const decimal = '.';
+    const subtract = '-';
+    const equal = '=';
+
     this.setState(prevState => {
-      if (prevState.input == 0) return { operation: '0', input: '0' };
-      let res = 0;
-      if (operation.test(prevState.input)) {
-        res = eval(prevState.operation.slice(0, -1));
-        return {
-          operation: `${prevState.operation.slice(0, -1)}=${res}`,
-          input: res.toString(),
-          result: res.toString()
+      if (prevState.formula == '') {
+        if (inputValue == 0) return { formula: '0', input: '0' };
+        if (inputValue == decimal) return { formula: '0.', input: '0.' };
+        if (operator.test(inputValue)) return { formula: `0${inputValue}`, input: inputValue };
+      }
+      //Operator
+      // start a new operation with previous result
+      if (operator.test(inputValue)) {
+        const last = this.lastChar(prevState.formula);
+        if (inputValue == subtract && last != subtract) {
+          return {
+            formula: prevState.formula.concat(subtract),
+            input: subtract
+          };
         }
+        if (operator.test(last) && last != subtract) return { formula: this.extract(prevState.formula).concat(inputValue), input: inputValue };
+        if (last == subtract) {
+          const sbtr = this.extract(prevState.formula);
+          if (operator.test(this.lastChar(sbtr))) return { formula: this.extract(sbtr).concat(inputValue), input: inputValue };
+          return {
+            formula: sbtr.concat(inputValue),
+            input: inputValue
+          };
+        }
+        const prevNumber = prevState.formula.split(equal);
+        const prevResult = prevNumber[prevNumber.length - 1].toString();
+        if (prevState.formula.includes(equal)) return { formula: prevResult.concat(inputValue), input: inputValue };
+        return {
+          formula: prevState.formula.concat(inputValue),
+          input: inputValue
+        };
       }
-      res = eval(prevState.operation.concat(prevState.input));
+      //decimal
+      if (inputValue == decimal) {
+        if (!prevState.input.includes(decimal)) {
+          if (operator.test(prevState.input) && !number.test(prevState.input)) return { formula: prevState.formula.concat('0.'), input: '0.' };
+          return {
+            formula: prevState.formula.concat(decimal),
+            input: prevState.input.concat(decimal)
+          }
+        }
+        return {
+          formula: prevState.formula,
+          input: prevState.input
+        };
+      }
+      //when user put a zero
+      const lastNumber = prevState.formula.split(operator);
+      if (lastNumber[lastNumber.length - 1] == '0' && inputValue == 0) return { formula: prevState.formula, input: prevState.input };
+      if (lastNumber[lastNumber.length - 1] == '0' && number.test(inputValue) && inputValue != 0) {
+        return { formula: this.extract(prevState.formula).concat(inputValue), input: inputValue };
+      }
+      if (prevState.input == 0 && prevState.formula == 0) return { formula: inputValue, input: inputValue };
+      if (operator.test(prevState.input) && number.test(inputValue)) return { formula: prevState.formula.concat(inputValue), input: inputValue };
       return {
-        operation: prevState.operation.concat(prevState.input, '=', res),
-        input: res.toString(),
-        result: res.toString()
-      }
+        formula: prevState.formula.concat(inputValue),
+        input: prevState.input.concat(inputValue)
+      };
+
     });
-  }
+  };
+
+  clear = () => {
+    this.setState({
+      formula: '',
+      input: '0',
+      result: null
+    });
+  };
+
+  resolve = () => {
+    this.setState((prevState) => {
+      const res = eval(prevState.formula);
+      return {
+        formula: prevState.formula.concat('=', res),
+        input: res
+      };
+    });
+  };
+
   render() {
     return (
       <div className='calculator'>
         <div>
-          <p id='formula'>{this.state.operation}</p>
+          <p id='formula'>{this.state.formula}</p>
           <p id='display'>{this.state.input}</p>
         </div>
         <div>
-          <button id='zero' onClick={() => this.handleInput('0')}>0</button>
-          <button id='one' onClick={() => this.handleInput('1')}>1</button>
-          <button id='two' onClick={() => this.handleInput('2')}>2</button>
-          <button id='three' onClick={() => this.handleInput('3')}>3</button>
-          <button id='four' onClick={() => this.handleInput('4')}>4</button>
-          <button id='five' onClick={() => this.handleInput('5')}>5</button>
-          <button id='six' onClick={() => this.handleInput('6')}>6</button>
-          <button id='seven' onClick={() => this.handleInput('7')}>7</button>
-          <button id='eight' onClick={() => this.handleInput('8')}>8</button>
-          <button id='nine' onClick={() => this.handleInput('9')}>9</button>
-          <button id='decimal' onClick={() => this.handleInput('.')}>.</button>
+          <button id='decimal' value={'.'} onClick={this.handleInput}>.</button>
+          <button id='zero' value={0} onClick={this.handleInput}>0</button>
+          <button id='one' value={1} onClick={this.handleInput}>1</button>
+          <button id='two' value={2} onClick={this.handleInput}>2</button>
+          <button id='three' value={3} onClick={this.handleInput}>3</button>
+          <button id='four' value={4} onClick={this.handleInput}>4</button>
+          <button id='five' value={5} onClick={this.handleInput}>5</button>
+          <button id='six' value={6} onClick={this.handleInput}>6</button>
+          <button id='seven' value={7} onClick={this.handleInput}>7</button>
+          <button id='eight' value={8} onClick={this.handleInput}>8</button>
+          <button id='nine' value={9} onClick={this.handleInput}>9</button>
         </div>
         <div>
-          <button id='add' onClick={() => this.handleInput('+')}>+</button>
-          <button id='subtract' onClick={() => this.handleInput('-')}>-</button>
-          <button id='multiply' onClick={() => this.handleInput('*')}>x</button>
-          <button id='divide' onClick={() => this.handleInput('/')}>/</button>
+          <button id='add' value={'+'} onClick={this.handleInput}>+</button>
+          <button id='subtract' value={'-'} onClick={this.handleInput}>-</button>
+          <button id='multiply' value={'*'} onClick={this.handleInput}>x</button>
+          <button id='divide' value={'/'} onClick={this.handleInput}>/</button>
         </div>
         <div>
           <button id='equals' onClick={this.resolve}>=</button>
-          <button id='clear' onClick={this.reset}>AC</button>
+          <button id='clear' onClick={this.clear}>AC</button>
         </div>
       </div>
     );
-  }
+  };
 }
 
 export default App;
