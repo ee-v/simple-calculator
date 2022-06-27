@@ -1,7 +1,7 @@
 {
-  "name": "my-react-boilerplate",
+  "name": "simple-calculator",
   "version": "1.0.0",
-  "description": "React setup with babel, webpack and basic loaders. It isn't optimized.",
+  "description": "Simple calculator project made with React | Webpack, Babel, NPM.",
   "private": true,
   "scripts": {
     "dev": "webpack serve --config webpack.dev.js",
