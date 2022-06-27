@@ -1,4 +1,8 @@
 import React from 'react';
+import { extract, lastChar } from './utils/index';
+
+import Display from './components/Display';
+import Keypad from './components/Keypad';
 
 class App extends React.Component {
   constructor(props) {
@@ -10,14 +14,7 @@ class App extends React.Component {
     };
     this.handleInput = this.handleInput.bind(this);
     this.clear = this.clear.bind(this);
-  };
-
-  extract = (formula) => {
-    return formula.slice(0, -1);
-  };
-
-  lastChar = (formula) => {
-    return formula[formula.length - 1];
+    this.resolve = this.resolve.bind(this);
   };
 
   handleInput = (e) => {
@@ -35,19 +32,18 @@ class App extends React.Component {
         if (operator.test(inputValue)) return { formula: `0${inputValue}`, input: inputValue };
       }
       //Operator
-      // start a new operation with previous result
       if (operator.test(inputValue)) {
-        const last = this.lastChar(prevState.formula);
+        const last = lastChar(prevState.formula);
         if (inputValue == subtract && last != subtract) {
           return {
             formula: prevState.formula.concat(subtract),
             input: subtract
           };
         }
-        if (operator.test(last) && last != subtract) return { formula: this.extract(prevState.formula).concat(inputValue), input: inputValue };
+        if (operator.test(last) && last != subtract) return { formula: extract(prevState.formula).concat(inputValue), input: inputValue };
         if (last == subtract) {
-          const sbtr = this.extract(prevState.formula);
-          if (operator.test(this.lastChar(sbtr))) return { formula: this.extract(sbtr).concat(inputValue), input: inputValue };
+          const sbtr = extract(prevState.formula);
+          if (operator.test(lastChar(sbtr))) return { formula: extract(sbtr).concat(inputValue), input: inputValue };
           return {
             formula: sbtr.concat(inputValue),
             input: inputValue
@@ -79,15 +75,16 @@ class App extends React.Component {
       const lastNumber = prevState.formula.split(operator);
       if (lastNumber[lastNumber.length - 1] == '0' && inputValue == 0) return { formula: prevState.formula, input: prevState.input };
       if (lastNumber[lastNumber.length - 1] == '0' && number.test(inputValue) && inputValue != 0) {
-        return { formula: this.extract(prevState.formula).concat(inputValue), input: inputValue };
+        return { formula: extract(prevState.formula).concat(inputValue), input: inputValue };
       }
       if (prevState.input == 0 && prevState.formula == 0) return { formula: inputValue, input: inputValue };
       if (operator.test(prevState.input) && number.test(inputValue)) return { formula: prevState.formula.concat(inputValue), input: inputValue };
+      // start a new operation with previous result
+      if (prevState.result != null) return { formula: '', input: inputValue, result: null };
       return {
         formula: prevState.formula.concat(inputValue),
         input: prevState.input.concat(inputValue)
       };
-
     });
   };
 
@@ -104,7 +101,8 @@ class App extends React.Component {
       const res = eval(prevState.formula);
       return {
         formula: prevState.formula.concat('=', res),
-        input: res
+        input: res,
+        result: res
       };
     });
   };
@@ -112,33 +110,8 @@ class App extends React.Component {
   render() {
     return (
       <div className='calculator'>
-        <div>
-          <p id='formula'>{this.state.formula}</p>
-          <p id='display'>{this.state.input}</p>
-        </div>
-        <div>
-          <button id='decimal' value={'.'} onClick={this.handleInput}>.</button>
-          <button id='zero' value={0} onClick={this.handleInput}>0</button>
-          <button id='one' value={1} onClick={this.handleInput}>1</button>
-          <button id='two' value={2} onClick={this.handleInput}>2</button>
-          <button id='three' value={3} onClick={this.handleInput}>3</button>
-          <button id='four' value={4} onClick={this.handleInput}>4</button>
-          <button id='five' value={5} onClick={this.handleInput}>5</button>
-          <button id='six' value={6} onClick={this.handleInput}>6</button>
-          <button id='seven' value={7} onClick={this.handleInput}>7</button>
-          <button id='eight' value={8} onClick={this.handleInput}>8</button>
-          <button id='nine' value={9} onClick={this.handleInput}>9</button>
-        </div>
-        <div>
-          <button id='add' value={'+'} onClick={this.handleInput}>+</button>
-          <button id='subtract' value={'-'} onClick={this.handleInput}>-</button>
-          <button id='multiply' value={'*'} onClick={this.handleInput}>x</button>
-          <button id='divide' value={'/'} onClick={this.handleInput}>/</button>
-        </div>
-        <div>
-          <button id='equals' onClick={this.resolve}>=</button>
-          <button id='clear' onClick={this.clear}>AC</button>
-        </div>
+        <Display formula={this.state.formula} input={this.state.input} />
+        <Keypad handleInput={this.handleInput} clear={this.clear} resolve={this.resolve} />
       </div>
     );
   };

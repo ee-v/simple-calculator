@@ -1,0 +1,33 @@
+.keypad {
+  height               : 80%;
+  display              : grid;
+  grid-template-columns: 3fr 1fr 1fr;
+  grid-template-areas  : 'numbers operators func';
+}
+
+.keypad-numbers {
+  grid-area            : numbers;
+  display              : grid;
+  grid-template-columns: repeat(3, auto);
+  grid-template-rows   : repeat(4, 1fr);
+}
+
+.keypad-operators {
+  grid-area         : operators;
+  display           : grid;
+  grid-template-rows: repeat(4, 1fr);
+}
+
+.keypad-func {
+  grid-area         : func;
+  display           : grid;
+  grid-template-rows: repeat(4, 1fr);
+}
+
+.span-h--2 {
+  grid-column-end: span 2;
+}
+
+.span-v--2 {
+  grid-row-end: span 2;
+}

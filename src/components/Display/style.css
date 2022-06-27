@@ -1,0 +1,31 @@
+.display {
+  height          : 20%;
+  text-align      : right;
+  background-color: rgb(205, 205, 205);
+}
+
+.display p:last-child {
+  width        : 100%;
+  font-weight  : bold;
+  padding-right: 1rem;
+}
+
+.display-formula {
+  height          : 30%;
+  display         : flex;
+  align-items     : center;
+  font-size       : 1.6rem;
+  color           : rgb(59, 59, 59);
+  background-color: rgb(222, 222, 222);
+}
+
+.display-input {
+  height     : 70%;
+  display    : flex;
+  align-items: center;
+}
+
+.display-input p {
+  color    : rgb(34, 34, 34);
+  font-size: 2.8rem;
+}
